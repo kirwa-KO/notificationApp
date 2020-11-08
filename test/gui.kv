@@ -1,0 +1,38 @@
+ScreenManager:
+	SingInPage:
+	SlotsPage:
+
+<SingInPage>:
+	name: 'singin'
+	login: login
+	password: password
+	MDTextField:
+		id: login
+		hint_text: "Enter your login"
+		pos_hint: {"center_x": 0.5, "center_y": 0.6}
+		size_hint_x: None
+		width: 400
+		helper_text: "or click forget password"
+		helper_text_mode: "on_focus"
+		icon_right: "shield-account"
+		icon_right_color: app.theme_cls.primary_color
+	MDTextField:
+		id: password
+		hint_text: "Enter your password"
+		pos_hint: {"center_x": 0.5, "center_y": 0.5}
+		size_hint_x: None
+		width: 400
+		icon_right: "key"
+		password: True
+		icon_right_color: app.theme_cls.primary_color
+	MDRoundFlatButton:
+		text: "Sing in"
+		pos_hint: {"center_x": 0.5, "center_y": 0.4}
+		on_release: root.click_sing_in_btn()
+
+<SlotsPage>:
+	name: 'slots'
+	MDRectangleFlatButton:
+		text: 'Slots'
+		pos_hint: {'center_x':0.5,'center_y':0.6}
+		on_press: root.manager.current = 'singin'
