@@ -1,6 +1,6 @@
 ScreenManager:
-	SingInPage:
 	SlotsPage:
+	SingInPage:
 
 <SingInPage>:
 	name: 'singin'
@@ -32,7 +32,74 @@ ScreenManager:
 
 <SlotsPage>:
 	name: 'slots'
-	MDRectangleFlatButton:
-		text: 'Reservation Slots'
-		pos_hint: {'center_x':0.5,'center_y':0.6}
-		on_press: root.manager.current = 'singin'
+
+	box: box
+	ScreenManager:
+		Screen:
+			BoxLayout:
+				orientation: "vertical"
+				MDToolbar:
+					title: "Reservation Slots"
+					right_action_items: [["dots-vertical", lambda x: nav_drawer.set_state() ]]
+					elevation: 10
+
+				ScrollView:
+					MDList:
+						id: box
+
+				MDBottomAppBar:
+					MDToolbar:
+						icon: 'logout'
+						icon_color: 1, 1, 1, 1
+						type: 'bottom'
+						on_action_button: root.logout()
+
+	MDNavigationDrawer:
+		id: nav_drawer
+		BoxLayout:
+			orientation: 'vertical'
+			spacing: '8dp'
+			padding: '8dp'
+			AsyncImage:
+				source: 'http://we-hack-things.com/rsrcs/img/1337.jpg'
+
+			MDRoundFlatButton:
+				text: root.full_name
+				pos_hint: {'center_x': 0.5}
+			ScrollView:
+				MDList:
+					OneLineIconListItem:
+						text: '05  Seconds'
+						on_release: root.oneLineListItemClicked_5_Second()
+						IconLeftWidget:
+							icon: 'clock'
+					OneLineIconListItem:
+						text: '30  Seconds'
+						on_release: root.oneLineListItemClicked_30_Seconds()
+						IconLeftWidget:
+							icon: 'clock'
+					OneLineIconListItem:
+						text: '60 Seconds'
+						on_release: root.oneLineListItemClicked_60_Seconds()
+						IconLeftWidget:
+							icon: 'clock'
+					OneLineIconListItem:
+						text: '05 minutes'
+						on_release: root.oneLineListItemClicked_300_Seconds()
+						IconLeftWidget:
+							icon: 'clock'
+					OneLineIconListItem:
+						text: '10 minutes'
+						on_release: root.oneLineListItemClicked_600_Seconds()
+						IconLeftWidget:
+							icon: 'clock'
+					OneLineIconListItem:
+						text: '30 minutes'
+						on_release: root.oneLineListItemClicked_1800_Seconds()
+						IconLeftWidget:
+							icon: 'clock'
+					OneLineIconListItem:
+						text: '60 minutes'
+						on_release: root.oneLineListItemClicked_3600_Seconds()
+						IconLeftWidget:
+							icon: 'clock'
