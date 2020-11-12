@@ -41,6 +41,8 @@ ScreenManager:
 				MDToolbar:
 					title: "Reservation Slots"
 					right_action_items: [["dots-vertical", lambda x: nav_drawer.set_state() ]]
+					left_action_items: [["menu", lambda x: menu.set_state() ]]
+					# right_action_items: [["dots-vertical", lambda x: root.click_there_btn(nav_drawer) ]]
 					elevation: 10
 
 				ScrollView:
@@ -55,6 +57,35 @@ ScreenManager:
 						on_action_button: root.logout()
 
 	MDNavigationDrawer:
+		id: menu
+		BoxLayout:
+			orientation: 'vertical'
+			spacing: '8dp'
+			padding: '8dp'
+			AsyncImage:
+				source: 'http://we-hack-things.com/rsrcs/img/back_grnd_app.png'
+
+			MDRoundFlatButton:
+				text: "Send me notification Of"
+				pos_hint: {'center_x': 0.5}
+			ScrollView:
+				MDList:
+					OneLineIconListItem:
+						text: 'Morning Slots'
+						on_release: root.add_morning_notification()
+						IconLeftWidget:
+							icon: 'weather-sunny'
+					OneLineIconListItem:
+						text: 'Evening Slots'
+						on_release: root.add_evening_notification()
+						IconLeftWidget:
+							icon: 'weather-cloudy'
+					OneLineIconListItem:
+						text: 'Night Slots'
+						on_release: root.add_night_notification()
+						IconLeftWidget:
+							icon: 'weather-night'
+	MDNavigationDrawer:
 		id: nav_drawer
 		BoxLayout:
 			orientation: 'vertical'
@@ -64,7 +95,8 @@ ScreenManager:
 				source: 'http://we-hack-things.com/rsrcs/img/1337.jpg'
 
 			MDRoundFlatButton:
-				text: root.full_name
+				# text: root.full_name if root.full_name != "" else "Your Name Will Show in Reopen App"
+				text: "Update Cluster Data Evey"
 				pos_hint: {'center_x': 0.5}
 			ScrollView:
 				MDList:
@@ -103,3 +135,5 @@ ScreenManager:
 						on_release: root.oneLineListItemClicked_3600_Seconds()
 						IconLeftWidget:
 							icon: 'clock'
+
+# !#Fs0ciety#!

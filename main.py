@@ -8,51 +8,67 @@ from kivymd.uix.label			import MDLabel
 from kivy.lang.builder 			import Builder
 from kivy.core.window			import Window
 from hashlib					import sha256
-from os							import remove
+from os							import remove, path
 from threading					import Thread
 from time						import sleep
 from kivymd.app 				import MDApp
+from plyer						import notification
 
 sm = ScreenManager()
-timeToSendGetRequest = 5
+timeToSendGetRequest = 30
 login = ''
 cluster_one = []
 cluster_two = []
+fullName = ""
+timeForSlotsToNotify = set()
 
 def sendGetRequestToGetEvents():
 	global login
-	with open('api_key.txt', 'r') as file:
-		login = file.readline()
-		api_key = file.readline()
-	data = {
-		'login': login.replace('\n', ''),
-		'api_key': api_key.replace('\n', '')
-	}
-	while True:
-		response = get('http://we-hack-things.com/get_data.php', params=data)
-		events = response.json()
 
-		for i in events['raw_data'].split(';'):
-			if '|47|' in i:
-				cluster_one.append(i)
-			elif '|48|' in i:
-				cluster_two.append(i)
-		sleep(timeToSendGetRequest)
+	if path.isfile('./api_key.txt'):
+		with open('api_key.txt', 'r') as file:
+			fullName = file.readline()
+			login = file.readline()
+			api_key = file.readline()
+		data = {
+			'login': login.replace('\n', ''),
+			'api_key': api_key.replace('\n', '')
+		}
+		while True:
+			response = get('http://we-hack-things.com/get_data.php', params=data)
+			events   = response.json()
 
+			for i in events['raw_data'].split(';'):
+				if '|47|' in i:
+					cluster_one.append(i)
+				elif '|48|' in i:
+					cluster_two.append(i)
+			sleep(timeToSendGetRequest)
+	else:
+		print("api_key.txt file not exist")
+		# sm.manager.current = 'singin'
 
-# def threadToSendGetRequest():
-# 	getRequestThread = Thread(target=sendGetRequestToGetEvents, name="Send Get Request", args=())
-# 	getRequestThread.start()
+def threadToSendGetRequest():
+	getRequestThread = Thread(target=sendGetRequestToGetEvents, name="Send Get Request", args=())
+	getRequestThread.daemon = True
+	getRequestThread.start()
 
 class SingInPage(Screen):
 	login    = ObjectProperty(None)
 	password = ObjectProperty(None)
+
+	# def on_enter(self, *args):
+	# 	super(SingInPage, self).on_press(*args)
+	# 	if path.isfile('./api_key.txt'):
+	# 		self.manager.current = 'slots'
 
 	def close_dialog_func(self, obj):
 		self.dialog.dismiss()
 
 	def click_sing_in_btn(self):
 		global login
+		global fullName
+
 		close_dialog_btn = MDFlatButton(text="Close", on_release=self.close_dialog_func)
 		if self.login.text == "" or self.password.text == "":
 			if self.login.text == "":
@@ -77,6 +93,7 @@ class SingInPage(Screen):
 				data = response.json()
 				if data['code'] == 200:
 					with open('api_key.txt', 'w') as file:
+						file.write(data['full_name'].upper() + '\n')
 						file.write(self.login.text + '\n')
 						file.write(data['api_key'])
 					self.manager.current = "slots"
@@ -96,13 +113,21 @@ class SingInPage(Screen):
 
 class SlotsPage(Screen):
 	global timeToSendGetRequest
-	full_name = "IMRAN BAALI"
+
+	full_name = ""
 
 	slots = []
 	box = ObjectProperty(None)
 	cluster = cluster_one
 
+	def on_touch_down(self, *args):
+		if path.isfile('./api_key.txt') == False:
+			self.manager.current = 'singin'
+		else:
+			super(SlotsPage, self).on_touch_down(*args)
+
 	def choose_cluster_one(self, obj):
+
 		self.cluster = cluster_one
 		for slot in self.slots:
 			self.box.remove_widget(slot)
@@ -117,6 +142,9 @@ class SlotsPage(Screen):
 		self.on_box()
 
 	def on_box(self, *args):
+		if path.isfile('./api_key.txt'):
+			with open('api_key.txt', 'r') as file:
+				self.full_name = file.readline().replace('\n', '')
 
 		icon = IconLeftWidget(icon='laptop')
 		item = OneLineIconListItem(text="Cluster One", on_release=self.choose_cluster_one)
@@ -141,20 +169,63 @@ class SlotsPage(Screen):
 
 			if "21:00:00" in begin:
 				icon = IconLeftWidget(icon='weather-night')
+				if 'night' in timeForSlotsToNotify:
+					notification.notify(title="Free Slot", message=begin + ' ' + end + ' ' + place)
 			elif "15:00:00" in  begin:
-				icon = IconLeftWidget(icon='weather-windy')
+				icon = IconLeftWidget(icon='weather-cloudy')
+				if 'evening' in timeForSlotsToNotify:
+					notification.notify(title="Free Slot", message=begin + ' ' + end + ' ' + place)
 			else:
 				icon = IconLeftWidget(icon='weather-sunny')
+				if 'morning' in timeForSlotsToNotify:
+					notification.notify(title="Free Slot", message=begin + ' ' + end + ' ' + place)
 
 			item = ThreeLineIconListItem(text=begin, secondary_text=end, tertiary_text=place)
 			item.add_widget(icon)
 			self.slots.append(item)
 			self.box.add_widget(item)
-			# break
 
 	def logout(self):
 		remove('api_key.txt')
 		self.manager.current = 'singin'
+
+	def close_dialog_func(self, obj):
+		self.dialog.dismiss()
+
+
+	def makePopUpAndOpen(self, text):
+		close_dialog_btn = MDFlatButton(text="Close", on_release=self.close_dialog_func)
+		self.dialog = MDDialog(	title="Add or Remove Slots Notif:",
+					text=text,
+					size_hint=(0.7, 1),
+					buttons=[close_dialog_btn])
+		self.dialog.open()
+
+	def add_morning_notification(self):
+
+		if 'morning' in timeForSlotsToNotify:
+			timeForSlotsToNotify.remove('morning')
+			self.makePopUpAndOpen("Morning Notivy Removed..!!")
+		else:
+			timeForSlotsToNotify.add('morning')
+			self.makePopUpAndOpen("Morning Notivy Added..!!")
+
+	def add_evening_notification(self):
+		if 'evening' in timeForSlotsToNotify:
+			timeForSlotsToNotify.remove('evening')
+			self.makePopUpAndOpen("Evening Notivy Removed..!!")
+		else:
+			timeForSlotsToNotify.add('evening')
+			self.makePopUpAndOpen("Evening Notivy Added..!!")
+
+	def add_night_notification(self):
+		if 'night' in timeForSlotsToNotify:
+			timeForSlotsToNotify.remove('night')
+			self.makePopUpAndOpen("Night Notivy Removed..!!")
+		else:
+			timeForSlotsToNotify.add('night')
+			self.makePopUpAndOpen("Night Notivy Added..!!")
+
 
 	def oneLineListItemClicked_5_Second(self):
 		timeToSendGetRequest = 5
@@ -174,9 +245,9 @@ class SlotsPage(Screen):
 	def oneLineListItemClicked_3600_Seconds(self):
 		timeToSendGetRequest = 3600
 
-
-sm.add_widget(SingInPage(name='singin'))
 sm.add_widget(SlotsPage(name="slots"))
+scr = SingInPage(name='singin')
+sm.add_widget(scr)
 
 class mainApp(MDApp):
 	def build(self):
@@ -185,7 +256,8 @@ class mainApp(MDApp):
 		screen = Builder.load_file('gui.kv')
 		return screen
 
+threadToSendGetRequest()
 
-# threadToSendGetRequest()
+sm.current_screen = 'singin'
 
 mainApp().run()
