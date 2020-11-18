@@ -1,72 +1,76 @@
 from kivy.uix.screenmanager 	import ScreenManager
 from requests					import get
 from kivy.lang.builder 			import Builder
-from kivy.core.window			import Window
+# from kivy.core.window			import Window
 from os							import path
 from threading					import Thread
 from time						import sleep
 from kivymd.app 				import MDApp
-from SlotsPage					import SlotsPage, cluster_one, cluster_two, timeToSendGetRequest
-from SingInPage					import SingInPage
+from slotspage					import SlotsPage, cluster_one, cluster_two, timeToSendGetRequest
+from singinpage					import SingInPage
 
 from json						import loads
 from kivy.clock 				import Clock
-from kivy.network.urlrequest import UrlRequest
+from kivy.network.urlrequest 	import UrlRequest
+from plyer						import notification
 
 sm = ScreenManager()
 login = ''
 fullName = ""
 
 def sendGetRequestToGetEvents():
-	print("I am Here..!!")
 	global login
 
 	if path.isfile('./api_key.txt'):
 		with open('api_key.txt', 'r') as file:
-			fullName = file.readline()
-			login = file.readline()
-			api_key = file.readline()
-		data = {
-			'login': login.replace('\n', ''),
-			'api_key': api_key.replace('\n', '')
-		}
-		while True:
-			try:
-				response = get('http://we-hack-things.com/get_data.php', params=data)
-				events   = response.json()
+			fullName = file.readline().replace('\n', '')
+			login = file.readline().replace('\n', '')
+			api_key = file.readline().replace('\n', '')
 
-				for i in events['raw_data'].split(';'):
-					if '|47|' in i:
-						cluster_one.append(i)
-					elif '|48|' in i:
-						cluster_two.append(i)
-				
-			except:
-				print("Get Request Error")
-			sleep(timeToSendGetRequest)
-	else:
-		print("api_key.txt file not exist")
+		url = 'http://we-hack-things.com/get_data.php?login=' + login + '&api_key=' + api_key
+		# print(url)
+		req = UrlRequest(url, got_json)
 
 
-# http://we-hack-things.com/get_data.php?login=ibaali&api_key=864a2dc2e97d473390fb4969f5b7edadUIxgcBgNVsWgbb769f2df7e65b5285da18f469a63ddbEmmc6J9DPiyJ
+def sendNotification(slot, cluster, notif):
+	slot_splited = slot.split('|')
+	if int(slot_splited[2]) < 50:
 
-def threadToSendGetRequest():
-	# getRequestThread = Thread(target=sendGetRequestToGetEvents, name="Send Get Request", args=())
-	# getRequestThread.daemon = True
-	# getRequestThread.start()
-	url = 'http://we-hack-things.com/get_data.php?login=ibaali&api_key=864a2dc2e97d473390fb4969f5b7edadUIxgcBgNVsWgbb769f2df7e65b5285da18f469a63ddbEmmc6J9DPiyJ'
-	req = UrlRequest(url, got_json)
-	# print(req.result)
-	
+		begin = "Begin: " + slot_splited[0]
+		end = "End:    " + slot_splited[1]
+		if cluster == 47:
+			place = "Place: " + slot_splited[2] + " Cluster: E1"
+		else:
+			place = "Place: " + slot_splited[2] + " Cluster: E2"
+
+		if "21:00:00" in begin:
+			if 'night' in notif:
+				notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
+		elif "15:00:00" in  begin:
+			if 'evening' in notif:
+				notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
+		else:
+			if 'morning' in notif:
+					notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
+
 def got_json(req, result):
 	events = loads(result)
-	# print(events['raw_data'])
-	for i in events['raw_data'].split(';'):
-		if '|47|' in i:
-			cluster_one.append(i)
-		elif '|48|' in i:
-			cluster_two.append(i)
-	# you need to add here function to send notification
+	# print(events)
+	if path.isfile('./notify_slots.txt'):
+		with open('notify_slots.txt', 'r') as file:
+			notif = file.readline()
+		nofit = notif.split('|')
+	else:
+		notif = []
+
+	for event in events['raw_data'].split(';'):
+		if '|47|' in event:
+			cluster_one.append(event)
+			sendNotification(event, 47, notif)
+		elif '|48|' in event:
+			cluster_two.append(event)
+			sendNotification(event, 48, notif)
+
 
 sm.add_widget(SlotsPage(name="slots"))
 scr = SingInPage(name='singin')
@@ -74,16 +78,18 @@ sm.add_widget(scr)
 
 class mainApp(MDApp):
 	def build(self):
-		Window.size = (360, 640)
+		# Window.size = (360, 640)
 		self.theme_cls.primary_palette= "Red"
 		screen = Builder.load_file('gui.kv')
 		return screen
 
-threadToSendGetRequest()
+# threadToSendGetRequest()
 
-Clock.schedule_interval(lambda x: threadToSendGetRequest(), 5)
+Clock.schedule_once(lambda x: sendGetRequestToGetEvents())
 
-# sm.current_screen = 'singin'
+Clock.schedule_interval(lambda x: sendGetRequestToGetEvents(), timeToSendGetRequest)
+
+
 
 if __name__ == "__main__":
 	mainApp().run()

@@ -4,13 +4,18 @@ from os							import remove, path
 from kivy.uix.screenmanager 	import Screen
 from kivymd.uix.button			import MDFlatButton
 from kivymd.uix.dialog			import MDDialog
-from plyer						import notification
+# from plyer						import notification
 
 
 cluster_one = []
 cluster_two = []
 timeToSendGetRequest = 5
 timeForSlotsToNotify = set()
+
+def writeNotifySlotElementInFile():
+	with open('notify_slots.txt', 'w') as file:
+		for i in timeForSlotsToNotify:
+			file.write(i + '|')
 
 class SlotsPage(Screen):
 	global timeToSendGetRequest
@@ -29,6 +34,7 @@ class SlotsPage(Screen):
 
 	def choose_cluster_one(self, obj):
 
+		# print(cluster_one)
 		self.cluster = cluster_one
 		for slot in self.slots:
 			self.box.remove_widget(slot)
@@ -70,16 +76,16 @@ class SlotsPage(Screen):
 
 			if "21:00:00" in begin:
 				icon = IconLeftWidget(icon='weather-night')
-				if 'night' in timeForSlotsToNotify:
-					notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
+				# if 'night' in timeForSlotsToNotify:
+				# 	notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
 			elif "15:00:00" in  begin:
 				icon = IconLeftWidget(icon='weather-cloudy')
-				if 'evening' in timeForSlotsToNotify:
-					notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
+				# if 'evening' in timeForSlotsToNotify:
+				# 	notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
 			else:
 				icon = IconLeftWidget(icon='weather-sunny')
-				if 'morning' in timeForSlotsToNotify:
-					notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
+				# if 'morning' in timeForSlotsToNotify:
+				# 	notification.notify(title="Free Slot", message=begin + '\n' + end + '\n' + place)
 
 			item = ThreeLineIconListItem(text=begin, secondary_text=end, tertiary_text=place)
 			item.add_widget(icon)
@@ -110,6 +116,7 @@ class SlotsPage(Screen):
 		else:
 			timeForSlotsToNotify.add('morning')
 			self.makePopUpAndOpen("Morning Notivy Added..!!")
+		writeNotifySlotElementInFile()
 
 	def add_evening_notification(self):
 		if 'evening' in timeForSlotsToNotify:
@@ -118,6 +125,7 @@ class SlotsPage(Screen):
 		else:
 			timeForSlotsToNotify.add('evening')
 			self.makePopUpAndOpen("Evening Notivy Added..!!")
+		writeNotifySlotElementInFile()
 
 	def add_night_notification(self):
 		if 'night' in timeForSlotsToNotify:
@@ -126,6 +134,7 @@ class SlotsPage(Screen):
 		else:
 			timeForSlotsToNotify.add('night')
 			self.makePopUpAndOpen("Night Notivy Added..!!")
+		writeNotifySlotElementInFile()
 
 
 	def oneLineListItemClicked_5_Second(self):

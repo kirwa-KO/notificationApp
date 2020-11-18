@@ -4,7 +4,7 @@ from kivymd.uix.dialog			import MDDialog
 from hashlib					import sha256
 from kivymd.uix.button			import MDFlatButton
 from requests.exceptions		import ReadTimeout
-from requests					import post, get
+from requests					import post
 
 class SingInPage(Screen):
 	login    = ObjectProperty(None)
